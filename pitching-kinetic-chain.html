@@ -1,0 +1,454 @@
+<title>투구 운동사슬</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: 헤더 → 8단계 선택 줄 → (측면 포즈 | 위에서 본 회전) 두 화면 → 설명 카드 → 속도 전달 그래프 */
+:root {
+  --bg: #eff3f5;
+  --panel: #ffffff;
+  --ink: #12202a;
+  --muted: #566873;
+  --line: #d3dce1;
+  --soft: #e4ebef;
+  --neutral: #8a9aa5;
+  --pelvis: #c26f00;
+  --trunk: #0b8a7e;
+  --shoulder: #2563eb;
+  --elbow: #7c3aed;
+  --hand: #d62552;
+  --sep: #e0561b;
+  --font-body: "IBM Plex Sans KR", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e151a; --panel: #162028; --ink: #e8eef2; --muted: #93a5b0; --line: #2a3943; --soft: #1e2b34;
+    --neutral: #6f8390; --pelvis: #f0a53a; --trunk: #2fcfbd; --shoulder: #6c9bff; --elbow: #b18cff; --hand: #ff6b8e; --sep: #ff7d45;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e151a; --panel: #162028; --ink: #e8eef2; --muted: #93a5b0; --line: #2a3943; --soft: #1e2b34;
+  --neutral: #6f8390; --pelvis: #f0a53a; --trunk: #2fcfbd; --shoulder: #6c9bff; --elbow: #b18cff; --hand: #ff6b8e; --sep: #ff7d45;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6;
+  padding-block: 24px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+h1 { margin: 0; font-size: clamp(24px, 4vw, 34px); line-height: 1.2; text-wrap: balance; letter-spacing: -0.01em; }
+.lede { margin: 6px 0 0; color: var(--muted); max-width: 62ch; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.label { font-size: 12px; letter-spacing: .08em; color: var(--muted); font-weight: 500; }
+
+/* legend */
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+  border-radius: 999px; padding: 4px 12px 4px 8px; font: inherit; font-size: 13px; cursor: pointer; }
+.chip i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); display: block; }
+.chip small { color: var(--muted); font-size: 12px; }
+.chip[aria-pressed="true"] { border-color: var(--c); box-shadow: inset 0 0 0 1px var(--c); }
+:focus-visible { outline: 2px solid var(--shoulder); outline-offset: 2px; }
+
+/* phase buttons */
+.phases { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.ph { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 8px 4px 8px;
+  cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.ph b { font-family: var(--font-num); font-weight: 500; font-size: 11px; color: var(--muted); }
+.ph span { font-size: 13px; font-weight: 500; line-height: 1.25; text-align: center; word-break: keep-all; }
+.ph .dots { display: flex; gap: 3px; height: 8px; }
+.ph .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); display: block; }
+.ph[aria-current="step"] { background: var(--soft); border-color: var(--ink); }
+@media (max-width: 720px) { .phases { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* controls */
+.ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.btn { font: inherit; font-weight: 500; border: 1px solid var(--ink); background: var(--ink); color: var(--bg); border-radius: 8px; padding: 6px 16px; cursor: pointer; min-width: 84px; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); min-width: 0; padding: 6px 12px; }
+.btn.ghost[aria-pressed="true"] { border-color: var(--ink); background: var(--soft); }
+#scrub { flex: 1 1 240px; min-width: 0; accent-color: var(--shoulder); height: 28px; }
+.spd { display: flex; gap: 4px; }
+
+/* stage */
+.stage { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 760px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+svg { display: block; width: 100%; height: auto; }
+.t { fill: var(--muted); font-family: var(--font-body); font-size: 11px; }
+.tn { font-family: var(--font-num); font-weight: 500; }
+.j { opacity: .32; transition: opacity .2s; }
+.j.on { opacity: 1; }
+.glow.on { filter: drop-shadow(0 0 5px currentColor); }
+.ring { fill: none; stroke-width: 2; opacity: 0; }
+.ring.on { opacity: .7; animation: pulse 1.2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes pulse { 0% { transform: scale(.8); opacity: .8; } 100% { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ring.on { animation: none; opacity: .6; } }
+
+/* info */
+.info { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 760px) { .info { grid-template-columns: minmax(0, 1fr); } }
+.info h2 { margin: 2px 0 6px; font-size: 22px; line-height: 1.25; }
+.info h2 em { font-style: normal; font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 8px; }
+.info p { margin: 0 0 10px; max-width: 60ch; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+.tag { font-size: 12px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--c); color: var(--c); font-weight: 500; }
+.read { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.read div { border-top: 3px solid var(--c); background: var(--soft); padding: 8px 10px; border-radius: 0 0 6px 6px; }
+.read small { display: block; font-size: 12px; color: var(--muted); }
+.read strong { font-family: var(--font-num); font-weight: 500; font-size: 22px; font-variant-numeric: tabular-nums; }
+.sepnote { font-size: 13px; color: var(--muted); margin-top: 10px; }
+.sepnote b { color: var(--sep); font-weight: 700; }
+
+.graphbox { overflow-x: auto; }
+.graphbox svg { min-width: 600px; }
+.keys { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-size: 13px; }
+.keys span { display: inline-flex; align-items: center; gap: 6px; }
+.keys i { width: 14px; height: 4px; border-radius: 2px; background: var(--c); display: block; }
+.keys em { font-style: normal; font-family: var(--font-num); font-size: 12px; color: var(--muted); }
+.foot { font-size: 12px; color: var(--muted); max-width: 80ch; margin: 0; }
+</style>
+
+<main class="wrap">
+  <header>
+    <div class="label">우투수 · 운동사슬</div>
+    <h1>투구 운동사슬</h1>
+    <p class="lede">공의 속도는 팔에서 시작되지 않습니다. 지면에서 만든 힘이 골반, 몸통, 어깨, 팔꿈치, 손 순서로 이어지며 마디마다 더 빠르게 전달됩니다. 단계를 고르거나 슬라이더를 움직여 각 마디가 언제 회전하는지 확인하세요.</p>
+    <div class="legend" id="legend" role="group" aria-label="마디 강조"></div>
+  </header>
+
+  <section class="panel" aria-label="단계 선택">
+    <div class="phases" id="phases"></div>
+  </section>
+
+  <section class="panel ctrl" aria-label="재생 제어">
+    <button class="btn" id="play" type="button">재생</button>
+    <input id="scrub" type="range" min="0" max="7" step="0.01" value="3" aria-label="투구 진행 위치">
+    <div class="spd" role="group" aria-label="재생 속도">
+      <button class="btn ghost" type="button" data-s="0.25" aria-pressed="false">0.25×</button>
+      <button class="btn ghost" type="button" data-s="0.5" aria-pressed="true">0.5×</button>
+      <button class="btn ghost" type="button" data-s="1" aria-pressed="false">1×</button>
+    </div>
+  </section>
+
+  <div class="stage">
+    <section class="panel" aria-label="측면 포즈">
+      <div class="label">측면 · 투구 방향 →</div>
+      <svg viewBox="0 0 400 290" role="img" aria-label="투수 측면 포즈 스틱 그림">
+        <line x1="10" y1="262" x2="390" y2="262" stroke="var(--line)" stroke-width="2"/>
+        <line x1="296" y1="262" x2="296" y2="250" stroke="var(--line)" stroke-width="0"/>
+        <g stroke="var(--neutral)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <polyline id="legR"/><polyline id="legL"/>
+        </g>
+        <g stroke="var(--neutral)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".7">
+          <polyline id="glove"/>
+        </g>
+        <circle id="head" r="12" fill="var(--panel)" stroke="var(--neutral)" stroke-width="3"/>
+        <g class="j glow" data-j="trunk" style="color:var(--trunk)"><line id="trunk" stroke="var(--trunk)" stroke-width="13" stroke-linecap="round"/></g>
+        <g class="j glow" data-j="pelvis" style="color:var(--pelvis)"><circle id="pelvis" r="11" fill="var(--pelvis)"/></g>
+        <g class="j glow" data-j="shoulder" style="color:var(--shoulder)">
+          <line id="uarm" stroke="var(--shoulder)" stroke-width="8" stroke-linecap="round"/>
+          <circle id="shoulder" r="8" fill="var(--shoulder)"/>
+        </g>
+        <g class="j glow" data-j="elbow" style="color:var(--elbow)">
+          <line id="farm" stroke="var(--elbow)" stroke-width="6" stroke-linecap="round"/>
+          <circle id="elbow" r="6" fill="var(--elbow)"/>
+        </g>
+        <g class="j glow" data-j="hand" style="color:var(--hand)"><circle id="hand" r="7" fill="var(--hand)"/></g>
+        <circle class="ring" id="ring-pelvis" r="16" stroke="var(--pelvis)"/>
+        <circle class="ring" id="ring-shoulder" r="14" stroke="var(--shoulder)"/>
+        <circle class="ring" id="ring-elbow" r="12" stroke="var(--elbow)"/>
+        <circle class="ring" id="ring-hand" r="12" stroke="var(--hand)"/>
+        <text class="t" x="386" y="278" text-anchor="end">홈플레이트 방향</text>
+      </svg>
+    </section>
+
+    <section class="panel" aria-label="위에서 본 회전">
+      <div class="label">위에서 본 모습 · 골반선과 어깨선</div>
+      <svg viewBox="0 0 300 300" role="img" aria-label="위에서 본 골반과 어깨 회전각">
+        <circle cx="150" cy="158" r="100" fill="none" stroke="var(--line)" stroke-dasharray="3 5"/>
+        <line x1="150" y1="158" x2="150" y2="48" stroke="var(--line)" stroke-dasharray="4 4"/>
+        <path d="M150 20 L143 34 L157 34 Z" fill="var(--muted)"/>
+        <text class="t" x="150" y="14" text-anchor="middle">홈플레이트</text>
+        <text class="t" x="154" y="64">0° 옆을 봄</text>
+        <path id="wedge" fill="var(--sep)" opacity=".28"/>
+        <g class="j glow" data-j="trunk" style="color:var(--trunk)">
+          <line id="tBar" stroke="var(--trunk)" stroke-width="10" stroke-linecap="round"/>
+          <circle id="tLead" r="7" fill="var(--panel)" stroke="var(--trunk)" stroke-width="3"/>
+          <text id="tLab" class="t" text-anchor="middle" style="fill:var(--trunk);font-weight:700">어깨</text>
+        </g>
+        <g class="j glow" data-j="pelvis" style="color:var(--pelvis)">
+          <line id="pBar" stroke="var(--pelvis)" stroke-width="10" stroke-linecap="round"/>
+          <circle id="pLead" r="6" fill="var(--panel)" stroke="var(--pelvis)" stroke-width="3"/>
+          <text id="pLab" class="t" text-anchor="middle" style="fill:var(--pelvis);font-weight:700">골반</text>
+        </g>
+        <circle cx="150" cy="158" r="6" fill="var(--ink)"/>
+        <text id="sepLab" class="t tn" text-anchor="middle" style="fill:var(--sep);font-size:13px;font-weight:500"></text>
+        <text class="t" x="150" y="292" text-anchor="middle">속 빈 점 = 앞쪽(글러브 쪽) · 90° = 홈플레이트 정면</text>
+      </svg>
+    </section>
+  </div>
+
+  <section class="panel info" aria-live="polite">
+    <div>
+      <div class="label" id="phaseNo"></div>
+      <h2 id="phaseName"></h2>
+      <div class="tags" id="phaseTags"></div>
+      <p id="phaseDesc"></p>
+      <p id="phaseChain" style="color:var(--muted)"></p>
+    </div>
+    <div>
+      <div class="read">
+        <div style="--c:var(--pelvis)"><small>골반</small><strong id="rP">0°</strong></div>
+        <div style="--c:var(--trunk)"><small>몸통</small><strong id="rT">0°</strong></div>
+        <div style="--c:var(--sep)"><small>분리각</small><strong id="rS">0°</strong></div>
+      </div>
+      <p class="sepnote">골반-몸통 분리각은 골반이 몸통보다 앞서 열린 정도입니다. 이번 투구에서 가장 큰 값은 <b id="maxSep"></b>이고 <b id="maxAt"></b> 단계에서 나타납니다.</p>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="마디별 회전 속도">
+    <div class="label">마디별 회전 속도가 최고에 이르는 순서 (각 곡선은 자기 최고값을 1로 맞춤)</div>
+    <div class="graphbox"><svg id="graph" viewBox="0 0 640 190" role="img" aria-label="골반, 몸통, 팔꿈치, 어깨, 손의 속도 최고점이 차례로 나타나는 그래프"></svg></div>
+    <div class="keys" id="keys"></div>
+  </section>
+
+  <p class="foot">각도와 속도는 야구 투구 생체역학 문헌에서 흔히 보고되는 범위를 단순화한 값이며, 선수마다 크게 다릅니다. 교육용 도식이고 진단이나 지도 기준이 아닙니다.</p>
+</main>
+
+<script>
+(function () {
+  var JOINTS = {
+    pelvis:   { name: "골반",   css: "--pelvis",   role: "회전 시작" },
+    trunk:    { name: "몸통",   css: "--trunk",    role: "속도 증폭" },
+    shoulder: { name: "어깨",   css: "--shoulder", role: "외회전 → 내회전" },
+    elbow:    { name: "팔꿈치", css: "--elbow",    role: "빠른 신전" },
+    hand:     { name: "손",     css: "--hand",     role: "공 릴리스" }
+  };
+  // pose keys: S shoulder, P pelvis, H head, RK/RF rear knee/foot, LK/LF lead knee/foot, E/W throwing elbow/hand, GE/GW glove elbow/hand
+  var PH = [
+    { n: "와인드업", en: "Windup", act: ["pelvis"], P: 0, T: 0,
+      d: "체중을 뒷다리에 싣고 앞다리를 들어 올려 균형을 잡습니다. 아직 큰 회전은 없고, 골반이 중심축이 되어 이후에 쓸 에너지를 안정적으로 모읍니다.",
+      c: "사슬의 출발점: 지면과 뒷다리, 골반이 몸 전체의 기준을 만듭니다.",
+      pose: { H:[152,72], S:[150,92], P:[150,150], RK:[148,205], RF:[146,258], LK:[190,140], LF:[180,195], E:[168,115], W:[185,102], GE:[168,118], GW:[186,104] } },
+    { n: "스트라이드", en: "Stride", act: ["pelvis"], P: -10, T: -20,
+      d: "뒷다리로 지면을 밀며 몸 전체가 홈플레이트 쪽으로 이동합니다. 골반과 어깨는 옆을 향한 채 닫혀 있고, 두 팔이 갈라지며 던지는 팔이 뒤로 빠집니다.",
+      c: "몸이 앞으로 가는 선형 운동량을 만들어 다음 단계의 회전에 넘겨줍니다.",
+      pose: { H:[172,74], S:[172,94], P:[185,152], RK:[165,205], RF:[140,258], LK:[240,195], LF:[285,250], E:[150,115], W:[122,125], GE:[205,108], GW:[235,100] } },
+    { n: "앞발 착지", en: "Foot contact", act: ["pelvis"], P: 10, T: -30,
+      d: "앞발이 지면을 잡고 브레이크 역할을 합니다. 골반은 열리기 시작하지만 어깨는 닫힌 채 남아 있어, 두 마디 사이에 각도 차이가 생깁니다.",
+      c: "앞다리가 고정되면서 골반이 도는 축이 생기고, 분리각이 만들어지기 시작합니다.",
+      pose: { H:[183,78], S:[185,98], P:[205,153], RK:[180,208], RF:[150,258], LK:[262,200], LF:[300,258], E:[145,98], W:[112,90], GE:[235,100], GW:[270,95] } },
+    { n: "골반 회전", en: "Pelvis rotation", act: ["pelvis"], P: 50, T: 0,
+      d: "앞다리를 축으로 골반이 먼저 열립니다. 어깨는 뒤에 남아 있어 골반-몸통 분리각이 최대가 되고, 몸통 근육이 늘어났다가 줄어들 준비를 합니다.",
+      c: "골반이 약 600~700°/s로 회전하며 첫 번째 속도 최고점을 만듭니다.",
+      pose: { H:[185,78], S:[190,96], P:[225,152], RK:[195,200], RF:[160,255], LK:[268,205], LF:[302,258], E:[150,98], W:[128,70], GE:[232,102], GW:[250,100] } },
+    { n: "몸통 회전", en: "Trunk rotation", act: ["trunk"], P: 85, T: 50,
+      d: "골반이 속도를 줄이며 멈추고, 몸통이 이어서 가속합니다. 팔은 아직 몸통보다 뒤에 처져 있어 어깨와 팔이 채찍처럼 끌려옵니다.",
+      c: "골반의 회전 에너지가 몸통으로 넘어가며 몸통이 약 1,100°/s까지 빨라집니다.",
+      pose: { H:[222,72], S:[215,92], P:[235,150], RK:[205,200], RF:[172,256], LK:[270,200], LF:[302,258], E:[195,96], W:[165,66], GE:[245,105], GW:[238,120] } },
+    { n: "최대 외회전", en: "Max external rotation", act: ["shoulder"], P: 95, T: 60,
+      d: "어깨가 약 170~180° 바깥으로 돌아 팔뚝이 가장 뒤로 젖혀집니다. 이 순간 어깨와 팔꿈치 안쪽에 가장 큰 부하가 걸리고, 저장된 탄성 에너지가 팔로 넘어갈 준비를 마칩니다.",
+      c: "몸통이 앞으로 기울며 속도를 어깨에 넘기고, 어깨가 되돌아오는 내회전을 시작합니다.",
+      pose: { H:[245,82], S:[235,100], P:[240,150], RK:[215,205], RF:[182,254], LK:[272,200], LF:[304,258], E:[215,96], W:[180,52], GE:[258,112], GW:[250,128] } },
+    { n: "릴리스", en: "Release", act: ["shoulder", "elbow", "hand"], P: 100, T: 95,
+      d: "어깨 내회전(최대 약 7,000°/s)과 팔꿈치 신전(약 2,400°/s)이 동시에 일어나고, 손끝에서 공이 떠납니다. 몸통은 앞으로 굽혀지며 분리각은 거의 사라집니다.",
+      c: "가장 가볍고 빠른 마디가 마지막에 가장 빠르게 움직여 공에 속도를 실어 줍니다.",
+      pose: { H:[275,92], S:[260,108], P:[243,152], RK:[222,200], RF:[205,248], LK:[274,205], LF:[304,258], E:[288,92], W:[320,76], GE:[255,130], GW:[245,140] } },
+    { n: "팔로스루", en: "Follow-through", act: ["shoulder", "trunk"], P: 105, T: 120,
+      d: "팔이 몸 반대편으로 지나가며 어깨 뒤쪽과 회전근개, 몸통이 회전을 천천히 줄입니다. 이 제동이 충분해야 어깨와 팔꿈치가 보호됩니다.",
+      c: "사슬이 끝나는 구간: 남은 에너지를 큰 근육이 흡수합니다.",
+      pose: { H:[295,125], S:[270,128], P:[240,150], RK:[235,190], RF:[245,225], LK:[272,205], LF:[304,258], E:[290,150], W:[300,175], GE:[250,140], GW:[238,150] } }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var css = function (v) { return "var(" + v + ")"; };
+  var ease = function (f) { return f * f * (3 - 2 * f); };
+  var lerp = function (a, b, f) { return a + (b - a) * f; };
+  var lerpP = function (a, b, f) { return [lerp(a[0], b[0], f), lerp(a[1], b[1], f)]; };
+
+  function at(t) {
+    t = Math.max(0, Math.min(7, t));
+    var i = Math.min(6, Math.floor(t)), f = ease(t - i);
+    var A = PH[i], B = PH[i + 1], pose = {};
+    for (var k in A.pose) pose[k] = lerpP(A.pose[k], B.pose[k], f);
+    return { pose: pose, P: lerp(A.P, B.P, f), T: lerp(A.T, B.T, f) };
+  }
+  var sepAt = function (t) { var s = at(t); return s.P - s.T; };
+
+  // max separation
+  var maxSep = -1e9, maxIdx = 0;
+  PH.forEach(function (p, i) { if (p.P - p.T > maxSep) { maxSep = p.P - p.T; maxIdx = i; } });
+  $("maxSep").textContent = maxSep + "°";
+  $("maxAt").textContent = PH[maxIdx].n;
+
+  // legend
+  var focus = null;
+  var legend = $("legend");
+  Object.keys(JOINTS).forEach(function (k) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.dataset.j = k; b.setAttribute("aria-pressed", "false");
+    b.style.setProperty("--c", css(JOINTS[k].css));
+    b.innerHTML = "<i></i>" + JOINTS[k].name + " <small>" + JOINTS[k].role + "</small>";
+    b.addEventListener("click", function () { focus = focus === k ? null : k; render(); });
+    legend.appendChild(b);
+  });
+
+  // phase buttons
+  var phWrap = $("phases");
+  PH.forEach(function (p, i) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "ph";
+    var dots = p.act.map(function (j) { return '<i style="--c:' + css(JOINTS[j].css) + '"></i>'; }).join("");
+    b.innerHTML = "<b>" + (i + 1) + '</b><span>' + p.n + '</span><div class="dots">' + dots + "</div>";
+    b.addEventListener("click", function () { goTo(i); });
+    phWrap.appendChild(b);
+  });
+
+  // side-view helpers
+  function setLine(id, a, b) { var e = $(id); e.setAttribute("x1", a[0]); e.setAttribute("y1", a[1]); e.setAttribute("x2", b[0]); e.setAttribute("y2", b[1]); }
+  function setC(id, p) { var e = $(id); e.setAttribute("cx", p[0]); e.setAttribute("cy", p[1]); }
+  function setPoly(id, pts) { $(id).setAttribute("points", pts.map(function (p) { return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ")); }
+
+  // top-view helpers
+  var CX = 150, CY = 158;
+  function pt(r, th) { var a = th * Math.PI / 180; return [CX - r * Math.sin(a), CY - r * Math.cos(a)]; }
+  var RP = 46, RT = 74, RW = 92;
+
+  function render() {
+    var t = parseFloat($("scrub").value);
+    var s = at(t), p = s.pose;
+    var idx = Math.max(0, Math.min(7, Math.round(t)));
+    var act = focus ? [focus] : PH[idx].act;
+
+    setPoly("legR", [p.P, p.RK, p.RF]); setPoly("legL", [p.P, p.LK, p.LF]); setPoly("glove", [p.S, p.GE, p.GW]);
+    setC("head", p.H);
+    setLine("trunk", p.P, p.S); setC("pelvis", p.P);
+    setLine("uarm", p.S, p.E); setC("shoulder", p.S);
+    setLine("farm", p.E, p.W); setC("elbow", p.E);
+    setC("hand", p.W);
+    setC("ring-pelvis", p.P); setC("ring-shoulder", p.S); setC("ring-elbow", p.E); setC("ring-hand", p.W);
+    document.querySelectorAll("[data-j]").forEach(function (e) {
+      if (e.classList.contains("chip")) return;
+      e.classList.toggle("on", act.indexOf(e.dataset.j) >= 0);
+    });
+    ["pelvis", "shoulder", "elbow", "hand"].forEach(function (k) { $("ring-" + k).classList.toggle("on", act.indexOf(k) >= 0); });
+    document.querySelectorAll(".chip").forEach(function (c) { c.setAttribute("aria-pressed", String(focus === c.dataset.j)); });
+
+    // top view
+    var P = s.P, T = s.T, a, b;
+    a = pt(RP, P); b = pt(-RP, P);
+    setLine("pBar", a, b); setC("pLead", pt(RP, P));
+    a = pt(RT, T); b = pt(-RT, T);
+    setLine("tBar", a, b); setC("tLead", pt(RT, T));
+    var pl = pt(-RP - 16, P), tl = pt(-RT - 16, T);
+    $("pLab").setAttribute("x", pl[0]); $("pLab").setAttribute("y", pl[1] + 4);
+    $("tLab").setAttribute("x", tl[0]); $("tLab").setAttribute("y", tl[1] + 4);
+    var sep = P - T;
+    var d = "M" + CX + " " + CY + " L" + pt(RW, P).map(function (n) { return n.toFixed(1); }).join(" ") +
+      " A" + RW + " " + RW + " 0 0 " + (T < P ? 1 : 0) + " " + pt(RW, T).map(function (n) { return n.toFixed(1); }).join(" ") + " Z";
+    $("wedge").setAttribute("d", Math.abs(sep) < 0.5 ? "" : d);
+    var m = pt(RW + 4, (P + T) / 2);
+    var sl = $("sepLab");
+    sl.textContent = Math.abs(sep) < 3 ? "" : "분리 " + Math.round(Math.abs(sep)) + "°";
+    sl.setAttribute("x", m[0]); sl.setAttribute("y", m[1] + 4);
+
+    // readouts
+    var f = function (v) { v = Math.round(v); return (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + "°"; };
+    $("rP").textContent = f(P); $("rT").textContent = f(T); $("rS").textContent = f(sep);
+
+    // info
+    var ph = PH[idx];
+    $("phaseNo").textContent = "단계 " + (idx + 1) + " / 8";
+    $("phaseName").innerHTML = ph.n + "<em>" + ph.en + "</em>";
+    $("phaseDesc").textContent = ph.d;
+    $("phaseChain").textContent = ph.c;
+    $("phaseTags").innerHTML = ph.act.map(function (j) {
+      return '<span class="tag" style="--c:' + css(JOINTS[j].css) + '">' + JOINTS[j].name + " · " + JOINTS[j].role + "</span>";
+    }).join("");
+    document.querySelectorAll(".ph").forEach(function (e, i) { if (i === idx) e.setAttribute("aria-current", "step"); else e.removeAttribute("aria-current"); });
+
+    // graph playhead
+    var X = gx(t);
+    $("head-line").setAttribute("x1", X); $("head-line").setAttribute("x2", X);
+  }
+
+  // graph
+  var G = { x0: 44, x1: 620, yT: 22, yB: 138 };
+  function gx(t) { return G.x0 + (G.x1 - G.x0) * t / 7; }
+  function gy(v) { return G.yB - (G.yB - G.yT) * v; }
+  var SER = [
+    { k: "pelvis",   name: "골반 회전",       mu: 3.3, sd: 0.55, v: "≈650°/s" },
+    { k: "trunk",    name: "몸통 회전",       mu: 4.4, sd: 0.5,  v: "≈1,100°/s" },
+    { k: "elbow",    name: "팔꿈치 신전",     mu: 5.5, sd: 0.38, v: "≈2,400°/s" },
+    { k: "shoulder", name: "어깨 내회전",     mu: 5.8, sd: 0.28, v: "≈7,000°/s" },
+    { k: "hand",     name: "손(공) 선속도",   mu: 6.1, sd: 0.4,  v: "≈35 m/s" }
+  ];
+  (function buildGraph() {
+    var s = '';
+    for (var i = 0; i < 8; i++) {
+      s += '<line x1="' + gx(i) + '" y1="' + G.yT + '" x2="' + gx(i) + '" y2="' + G.yB + '" stroke="var(--line)" stroke-width="1"/>';
+      s += '<text class="t" x="' + gx(i) + '" y="' + (G.yB + 16) + '" text-anchor="middle">' + PH[i].n + '</text>';
+    }
+    s += '<line x1="' + G.x0 + '" y1="' + G.yB + '" x2="' + G.x1 + '" y2="' + G.yB + '" stroke="var(--neutral)" stroke-width="1.5"/>';
+    // separation line
+    var sp = [], sf = [];
+    for (var x = 0; x <= 7.001; x += 0.05) { var v = Math.max(0, sepAt(x)) / maxSep; sp.push((x === 0 ? "M" : "L") + gx(x).toFixed(1) + " " + gy(v).toFixed(1)); }
+    s += '<path d="' + sp.join("") + '" fill="none" stroke="var(--sep)" stroke-width="2" stroke-dasharray="5 4"/>';
+    SER.forEach(function (o) {
+      var pts = [];
+      for (var x = 0; x <= 7.001; x += 0.05) { var v = Math.exp(-Math.pow(x - o.mu, 2) / (2 * o.sd * o.sd)); pts.push([gx(x), gy(v)]); }
+      var line = pts.map(function (q, i) { return (i ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1); }).join("");
+      s += '<path d="' + line + 'L' + gx(7) + ' ' + G.yB + 'L' + G.x0 + ' ' + G.yB + 'Z" fill="' + css(JOINTS[o.k].css) + '" opacity=".1"/>';
+      s += '<path d="' + line + '" fill="none" stroke="' + css(JOINTS[o.k].css) + '" stroke-width="2.5"/>';
+      s += '<circle cx="' + gx(o.mu) + '" cy="' + gy(1) + '" r="4" fill="' + css(JOINTS[o.k].css) + '"/>';
+    });
+    s += '<line id="head-line" x1="0" y1="' + (G.yT - 8) + '" x2="0" y2="' + G.yB + '" stroke="var(--ink)" stroke-width="2"/>';
+    $("graph").innerHTML = s;
+    var k = SER.map(function (o) {
+      return '<span style="--c:' + css(JOINTS[o.k].css) + '"><i></i>' + o.name + ' <em>' + o.v + '</em></span>';
+    }).join("") + '<span style="--c:var(--sep)"><i style="background:repeating-linear-gradient(90deg,var(--sep) 0 5px,transparent 5px 8px)"></i>골반-몸통 분리각 <em>최대 ≈' + maxSep + '°</em></span>';
+    $("keys").innerHTML = k;
+  })();
+
+  // playback
+  var playing = false, speed = 0.5, last = 0, raf = 0;
+  function setPlay(on) {
+    playing = on; $("play").textContent = on ? "일시정지" : "재생";
+    cancelAnimationFrame(raf);
+    if (on) { last = performance.now(); raf = requestAnimationFrame(tick); }
+  }
+  function tick(now) {
+    var dt = (now - last) / 1000; last = now;
+    var v = parseFloat($("scrub").value) + dt * speed * 1.2;
+    if (v > 7.4) v = 0; // brief hold at the end, then loop
+    $("scrub").value = Math.min(7, v);
+    render();
+    if (playing) raf = requestAnimationFrame(tick);
+  }
+  function goTo(i) {
+    setPlay(false); focus = focus;
+    var from = parseFloat($("scrub").value), to = i, start = performance.now(), dur = 450;
+    (function step(now) {
+      var f = Math.min(1, (now - start) / dur);
+      $("scrub").value = lerp(from, to, ease(f)); render();
+      if (f < 1 && !playing) requestAnimationFrame(step);
+    })(start);
+  }
+  $("play").addEventListener("click", function () {
+    if (!playing && parseFloat($("scrub").value) >= 6.99) $("scrub").value = 0;
+    setPlay(!playing);
+  });
+  $("scrub").addEventListener("input", function () { setPlay(false); render(); });
+  document.querySelectorAll(".spd .btn").forEach(function (b) {
+    b.addEventListener("click", function () {
+      speed = parseFloat(b.dataset.s);
+      document.querySelectorAll(".spd .btn").forEach(function (o) { o.setAttribute("aria-pressed", String(o === b)); });
+    });
+  });
+
+  render();
+})();
+</script>
